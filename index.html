@@ -330,6 +330,45 @@
 
         // --- FUNCIONES CORE ---
 
+        // Check permission on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('btn-permiso-notif');
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    btn.innerHTML = "✅ NOTIFICACIONES ACTIVAS";
+                    btn.className = "flex-1 bg-green-600 text-white text-[10px] font-bold py-2 rounded pointer-events-none";
+                } else if (Notification.permission === "denied") {
+                    btn.innerText = "❌ BLOQUEADO (Activar en Ajustes)";
+                    btn.className = "flex-1 bg-red-600 text-white text-[10px] font-bold py-2 rounded";
+                }
+            }
+        });
+
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) return alert("Navegador no compatible");
+
+            // Si ya está denegado, avisar que es manual
+            if (Notification.permission === "denied") {
+                alert("Has bloqueado las notificaciones. Debes activarlas manualmente en el icono del candado 🔒 de la barra de direcciones.");
+                return;
+            }
+
+            // Si ya está concedido, nada que hacer
+            if (Notification.permission === "granted") return;
+
+            Notification.requestPermission().then(p => {
+                const btn = document.getElementById('btn-permiso-notif');
+                if (p === "granted") {
+                    btn.innerHTML = "✅ NOTIFICACIONES ACTIVAS";
+                    btn.className = "flex-1 bg-green-600 text-white text-[10px] font-bold py-2 rounded";
+                    new Notification("DBFS Tracker", { body: "Sistema listo y configurado." });
+                } else {
+                    btn.innerText = "❌ DENEGADO";
+                    btn.className = "flex-1 bg-red-600 text-white text-[10px] font-bold py-2 rounded";
+                }
+            });
+        }
+
         function fullReset(id) {
             if (timers[id].interval) clearInterval(timers[id].interval);
             if (timers[id].cooldownInterval) clearInterval(timers[id].cooldownInterval);
@@ -566,21 +605,6 @@
         function initAudio(id) {
             if (!timers[id].audioContext) timers[id].audioContext = new (window.AudioContext || window.webkitAudioContext)();
             if (timers[id].audioContext.state === 'suspended') timers[id].audioContext.resume();
-        }
-
-        function requestNotificationPermission() {
-            if (!("Notification" in window)) return alert("Navegador no compatible");
-            Notification.requestPermission().then(p => {
-                const btn = document.getElementById('btn-permiso-notif');
-                if (p === "granted") {
-                    btn.innerHTML = "✅ ACTIVADO";
-                    btn.className = "flex-1 bg-green-600 text-white text-[10px] font-bold py-2 rounded";
-                    new Notification("DBFS Tracker", { body: "Sistema listo." });
-                } else {
-                    btn.innerText = "❌ DENEGADO";
-                    btn.className = "flex-1 bg-red-600 text-white text-[10px] font-bold py-2 rounded";
-                }
-            });
         }
 
         function testSystem() {
