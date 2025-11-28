@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBFS Remaster Tracker Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Roboto', sans-serif; }
+        h1, h2, h3, .timer-display { font-family: 'Orbitron', sans-serif; }
+
+        /* Animaciones */
+        @keyframes flash-red {
+            0%, 100% { border-color: #ef4444; background-color: rgba(239, 68, 68, 0.1); }
+            50% { border-color: #b91c1c; background-color: rgba(239, 68, 68, 0.3); }
+        }
+        .alarm-active { animation: flash-red 0.8s infinite; }
+
+        .success-active {
+            border-color: #22c55e !important;
+            background: linear-gradient(to bottom, rgba(20, 83, 45, 0.3), rgba(30, 41, 59, 0.8));
+        }
+
+        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .cooldown-bar { transition: width 1s linear; }
+
+        .input-mini {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            padding: 2px;
+        }
+        .input-mini:focus { outline: none; border-color: #fbbf24; color: white; }
+
+        /* Botones de control pequeños */
+        .btn-ctrl {
+            background: rgba(255,255,255,0.1);
+            color: #aaa;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .btn-ctrl:hover { background: rgba(255,255,255,0.2); color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-2 md:p-6">
+
+    <!-- Header -->
+    <header class="text-center mb-8">
+        <h1 class="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-2 filter drop-shadow-lg">
+            DBFS TRACKER
+        </h1>
+
+        <!-- CRÉDITOS (Movidso arriba) -->
+        <div class="text-slate-400 text-xs mb-6 space-y-1 bg-slate-900/50 p-2 rounded-lg inline-block border border-slate-700/50">
+            <p>Creado por <span class="text-yellow-500 font-bold">McDaniel93</span> (Discord)</p>
+            <p>Roblox: <span class="text-blue-400 font-bold">doky515</span></p>
+            <p class="mt-2 pt-2 border-t border-slate-700/50">
+                ¿Quieres donar Robux?
+                <a href="https://www.roblox.com/es/catalog/15408656405/StoryShift-Chara" target="_blank" class="text-red-400 hover:text-red-300 transition-colors underline font-bold">
+                    Compra la camisa: ( ✦ ) StoryShift Chara
+                </a>
+            </p>
+        </div>
+
+        <!-- Panel de Configuración -->
+        <div class="mx-auto bg-slate-800/90 p-3 rounded-xl border border-slate-600 max-w-md shadow-xl flex justify-center">
+            <div class="flex gap-2 w-full">
+                <button onclick="requestNotificationPermission()" id="btn-permiso-notif" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-2 rounded transition-colors flex items-center justify-center gap-1">
+                    <span>⚠️</span> ACTIVAR NOTIFICACIONES
+                </button>
+                <button onclick="testSystem()" class="bg-slate-600 hover:bg-slate-500 text-white text-[10px] font-bold py-2 px-3 rounded border border-slate-500">
+                    🔊 TEST SONIDOS
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="max-w-7xl mx-auto w-full">
+
+        <!-- SECCIÓN RAIDS -->
+        <div class="mb-10">
+            <div class="flex items-center gap-4 mb-4 border-b border-red-900/50 pb-2">
+                <h2 class="text-xl md:text-2xl text-red-400 font-bold tracking-wider">RAIDS (4H)</h2>
+                <span class="bg-red-500/10 text-red-400 text-[10px] px-2 py-1 rounded border border-red-500/20">GLOBAL BOSSES</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+
+                <!-- ANDROID -->
+                <div id="card-android" class="glass-panel rounded-lg p-4 border-t-2 border-red-500 relative group">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg text-white font-bold">Android</h3>
+                        <span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">4H</span>
+                    </div>
+
+                    <!-- ROTATION TIMER -->
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('android', 4)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold text-xs py-2 rounded shadow-lg flex items-center justify-center gap-2 border border-yellow-500/30">
+                            <span>🕒</span> DETECTAR HORA AUTO (+4H)
+                        </button>
+                        <div id="display-android" class="text-3xl text-center text-red-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <!-- Controls Timer Main -->
+                        <div class="flex justify-center items-center gap-2 mb-2">
+                            <button onclick="adjustTime('android', -1)" class="btn-ctrl">-1m</button>
+                            <button id="btn-main-pause-android" onclick="toggleMainPause('android')" class="btn-ctrl bg-yellow-600/50 hover:bg-yellow-500 w-8 text-white">⏸</button>
+                            <button onclick="adjustTime('android', 1)" class="btn-ctrl">+1m</button>
+                        </div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2">
+                            <span>O manual:</span>
+                            <input type="time" id="time-android" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-red-500" onchange="startTimer('android')">
+                        </div>
+                    </div>
+
+                    <!-- TIEMPO DERROTA CONFIG -->
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700">
+                        <span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span>
+                        <div class="flex items-center gap-1">
+                            <input type="number" id="cd-h-android" value="1" class="input-mini w-6" min="0"> h
+                            <input type="number" id="cd-m-android" value="15" class="input-mini w-8" min="0" max="59"> m
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div class="flex gap-2">
+                        <button onclick="markSuccess('android')" class="flex-1 bg-green-700 hover:bg-green-600 text-white text-xs font-bold py-3 rounded shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1">🏆 VICTORIA</button>
+                        <button onclick="startCooldown('android')" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-3 rounded shadow-lg transition-all active:scale-95 border-l-4 border-red-500 flex items-center justify-center gap-1">💀 DERROTA</button>
+                        <button onclick="fullReset('android')" class="px-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded shadow-lg border border-gray-600">↺</button>
+                    </div>
+
+                    <!-- COOLDOWN PANEL (CON CONTROLES NUEVOS) -->
+                    <div id="cooldown-panel-android" class="hidden mt-2 bg-red-900/20 border border-red-500/30 rounded p-2 relative">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] text-red-300 uppercase font-bold">Reintentar:</span>
+                            <!-- Controles Cooldown -->
+                            <div class="flex gap-1">
+                                <button onclick="adjustCooldown('android', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button>
+                                <button id="btn-pause-cd-android" onclick="toggleCooldownPause('android')" class="text-[10px] bg-yellow-600/50 hover:bg-yellow-500 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button>
+                                <button onclick="adjustCooldown('android', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button>
+                            </div>
+                        </div>
+                        <div id="cooldown-display-android" class="text-lg text-center text-red-400 font-mono font-bold">00:00</div>
+                        <div class="w-full bg-slate-800 h-1 mt-1 rounded-full overflow-hidden">
+                            <div id="cooldown-bar-android" class="bg-red-500 h-full w-full cooldown-bar"></div>
+                        </div>
+                    </div>
+                    <button id="btn-stop-android" onclick="silenceAlarm('android')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+                <!-- SNOWFIELD -->
+                <div id="card-snowfield" class="glass-panel rounded-lg p-4 border-t-2 border-red-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Snowfield</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">4H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('snowfield', 4)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+4H)</button>
+                        <div id="display-snowfield" class="text-3xl text-center text-red-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('snowfield', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-snowfield" onclick="toggleMainPause('snowfield')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('snowfield', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-snowfield" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-red-500" onchange="startTimer('snowfield')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-snowfield" value="1" class="input-mini w-6"> h<input type="number" id="cd-m-snowfield" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('snowfield')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('snowfield')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-red-500">💀 DERROTA</button><button onclick="fullReset('snowfield')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-snowfield" class="hidden mt-2 bg-red-900/20 border border-red-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-red-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('snowfield', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-snowfield" onclick="toggleCooldownPause('snowfield')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('snowfield', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-snowfield" class="text-lg text-center text-red-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-snowfield" class="bg-red-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-snowfield" onclick="silenceAlarm('snowfield')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+                <!-- MAJIN BUU -->
+                <div id="card-majinbuu" class="glass-panel rounded-lg p-4 border-t-2 border-red-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Majin Buu</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">4H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('majinbuu', 4)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+4H)</button>
+                        <div id="display-majinbuu" class="text-3xl text-center text-red-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('majinbuu', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-majinbuu" onclick="toggleMainPause('majinbuu')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('majinbuu', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-majinbuu" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-red-500" onchange="startTimer('majinbuu')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-majinbuu" value="1" class="input-mini w-6"> h<input type="number" id="cd-m-majinbuu" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('majinbuu')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('majinbuu')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-red-500">💀 DERROTA</button><button onclick="fullReset('majinbuu')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-majinbuu" class="hidden mt-2 bg-red-900/20 border border-red-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-red-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('majinbuu', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-majinbuu" onclick="toggleCooldownPause('majinbuu')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('majinbuu', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-majinbuu" class="text-lg text-center text-red-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-majinbuu" class="bg-red-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-majinbuu" onclick="silenceAlarm('majinbuu')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+                <!-- GOTENKS -->
+                <div id="card-gotenks" class="glass-panel rounded-lg p-4 border-t-2 border-red-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Gotenks</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">4H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('gotenks', 4)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+4H)</button>
+                        <div id="display-gotenks" class="text-3xl text-center text-red-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('gotenks', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-gotenks" onclick="toggleMainPause('gotenks')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('gotenks', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-gotenks" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-red-500" onchange="startTimer('gotenks')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-gotenks" value="1" class="input-mini w-6"> h<input type="number" id="cd-m-gotenks" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('gotenks')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('gotenks')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-red-500">💀 DERROTA</button><button onclick="fullReset('gotenks')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-gotenks" class="hidden mt-2 bg-red-900/20 border border-red-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-red-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('gotenks', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-gotenks" onclick="toggleCooldownPause('gotenks')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('gotenks', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-gotenks" class="text-lg text-center text-red-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-gotenks" class="bg-red-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-gotenks" onclick="silenceAlarm('gotenks')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+                <!-- SUPER SAIBA -->
+                <div id="card-saiba" class="glass-panel rounded-lg p-4 border-t-2 border-red-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Super Saiba</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">4H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('saiba', 4)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+4H)</button>
+                        <div id="display-saiba" class="text-3xl text-center text-red-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('saiba', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-saiba" onclick="toggleMainPause('saiba')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('saiba', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-saiba" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-red-500" onchange="startTimer('saiba')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-saiba" value="1" class="input-mini w-6"> h<input type="number" id="cd-m-saiba" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('saiba')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('saiba')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-red-500">💀 DERROTA</button><button onclick="fullReset('saiba')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-saiba" class="hidden mt-2 bg-red-900/20 border border-red-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-red-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('saiba', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-saiba" onclick="toggleCooldownPause('saiba')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('saiba', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-saiba" class="text-lg text-center text-red-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-saiba" class="bg-red-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-saiba" onclick="silenceAlarm('saiba')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+                <!-- THE DRINK -->
+                <div id="card-thedrink" class="glass-panel rounded-lg p-4 border-t-2 border-red-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">The Drink</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">4H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('thedrink', 4)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+4H)</button>
+                        <div id="display-thedrink" class="text-3xl text-center text-red-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('thedrink', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-thedrink" onclick="toggleMainPause('thedrink')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('thedrink', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-thedrink" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-red-500" onchange="startTimer('thedrink')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-thedrink" value="1" class="input-mini w-6"> h<input type="number" id="cd-m-thedrink" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('thedrink')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('thedrink')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-red-500">💀 DERROTA</button><button onclick="fullReset('thedrink')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-thedrink" class="hidden mt-2 bg-red-900/20 border border-red-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-red-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('thedrink', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-thedrink" onclick="toggleCooldownPause('thedrink')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('thedrink', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-thedrink" class="text-lg text-center text-red-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-thedrink" class="bg-red-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-thedrink" onclick="silenceAlarm('thedrink')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DUNGEONS -->
+        <div class="mb-10">
+            <div class="flex items-center gap-4 mb-4 border-b border-cyan-900/50 pb-2">
+                <h2 class="text-xl md:text-2xl text-cyan-400 font-bold tracking-wider">DUNGEONS (3H)</h2>
+                <span class="bg-cyan-500/10 text-cyan-400 text-[10px] px-2 py-1 rounded border border-cyan-500/20">WAVE MODE</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <!-- RED RIBBON (Con nuevos controles) -->
+                <div id="card-redribbon" class="glass-panel rounded-lg p-4 border-t-2 border-cyan-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Red Ribbon</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">3H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('redribbon', 3)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+3H)</button>
+                        <div id="display-redribbon" class="text-3xl text-center text-cyan-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('redribbon', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-redribbon" onclick="toggleMainPause('redribbon')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('redribbon', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-redribbon" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-cyan-500" onchange="startTimer('redribbon')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-redribbon" value="0" class="input-mini w-6"> h<input type="number" id="cd-m-redribbon" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('redribbon')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('redribbon')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-cyan-500">💀 DERROTA</button><button onclick="fullReset('redribbon')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-redribbon" class="hidden mt-2 bg-cyan-900/20 border border-cyan-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-cyan-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('redribbon', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-redribbon" onclick="toggleCooldownPause('redribbon')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('redribbon', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-redribbon" class="text-lg text-center text-cyan-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-redribbon" class="bg-cyan-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-redribbon" onclick="silenceAlarm('redribbon')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+                <!-- BABIDI -->
+                <div id="card-babidi" class="glass-panel rounded-lg p-4 border-t-2 border-cyan-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Babidi</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">3H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('babidi', 3)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+3H)</button>
+                        <div id="display-babidi" class="text-3xl text-center text-cyan-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('babidi', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-babidi" onclick="toggleMainPause('babidi')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('babidi', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-babidi" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-cyan-500" onchange="startTimer('babidi')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-babidi" value="0" class="input-mini w-6"> h<input type="number" id="cd-m-babidi" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('babidi')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('babidi')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-cyan-500">💀 DERROTA</button><button onclick="fullReset('babidi')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-babidi" class="hidden mt-2 bg-cyan-900/20 border border-cyan-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-cyan-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('babidi', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-babidi" onclick="toggleCooldownPause('babidi')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('babidi', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-babidi" class="text-lg text-center text-cyan-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-babidi" class="bg-cyan-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-babidi" onclick="silenceAlarm('babidi')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+                <!-- ANIMAL DOJO -->
+                <div id="card-animaldojo" class="glass-panel rounded-lg p-4 border-t-2 border-cyan-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Animal Dojo</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">3H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('animaldojo', 3)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+3H)</button>
+                        <div id="display-animaldojo" class="text-3xl text-center text-cyan-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('animaldojo', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-animaldojo" onclick="toggleMainPause('animaldojo')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('animaldojo', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-animaldojo" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-cyan-500" onchange="startTimer('animaldojo')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-animaldojo" value="0" class="input-mini w-6"> h<input type="number" id="cd-m-animaldojo" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('animaldojo')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('animaldojo')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-cyan-500">💀 DERROTA</button><button onclick="fullReset('animaldojo')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-animaldojo" class="hidden mt-2 bg-cyan-900/20 border border-cyan-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-cyan-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('animaldojo', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-animaldojo" onclick="toggleCooldownPause('animaldojo')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('animaldojo', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-animaldojo" class="text-lg text-center text-cyan-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-animaldojo" class="bg-cyan-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-animaldojo" onclick="silenceAlarm('animaldojo')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER AÑADIDO AQUI -->
+    <footer class="mt-12 mb-6 text-center text-slate-500 text-xs">
+        <!-- Reemplaza esto con el contenido correcto si es necesario -->
+    </footer>
+
+    <script>
+        const timers = {};
+        const ids = ['android', 'snowfield', 'majinbuu', 'gotenks', 'saiba', 'thedrink', 'redribbon', 'babidi', 'animaldojo'];
+
+        ids.forEach(id => {
+            timers[id] = {
+                interval: null,
+                targetDate: null,
+                mainPaused: false,
+                mainRemaining: 0,
+
+                cooldownInterval: null,
+                cooldownTotal: 0,
+                cooldownTarget: null,
+                cdPaused: false,
+                cdRemaining: 0,
+
+                audioContext: null,
+                oscillator: null,
+                warningSent: false
+            };
+        });
+
+        // --- FUNCIONES CORE ---
+
+        function fullReset(id) {
+            if (timers[id].interval) clearInterval(timers[id].interval);
+            if (timers[id].cooldownInterval) clearInterval(timers[id].cooldownInterval);
+
+            timers[id].mainPaused = false;
+            timers[id].cdPaused = false;
+            timers[id].warningSent = false;
+
+            document.getElementById('display-'+id).innerText = "00:00:00";
+            document.getElementById('time-'+id).value = "";
+            document.getElementById('card-'+id).classList.remove('success-active');
+            document.getElementById('cooldown-panel-'+id).classList.add('hidden');
+
+            // Reset Pause Button Main
+            const btnMain = document.getElementById('btn-main-pause-'+id);
+            if(btnMain) {
+                btnMain.innerText = "⏸";
+                btnMain.classList.remove('bg-green-600/50');
+                btnMain.classList.add('bg-yellow-600/50');
+            }
+
+            // Reset Pause Button CD
+            const btnCd = document.getElementById('btn-pause-cd-'+id);
+            if(btnCd) {
+                btnCd.innerText = "⏸";
+                btnCd.classList.remove('bg-green-600/50');
+                btnCd.classList.add('bg-yellow-600/50');
+            }
+
+            silenceAlarm(id);
+        }
+
+        // --- TIMER PRINCIPAL ---
+
+        function startAuto(id, hours) {
+            initAudio(id);
+            fullReset(id);
+            const now = new Date();
+            const target = new Date(now.getTime() + hours * 3600000);
+
+            const h = target.getHours().toString().padStart(2,'0');
+            const m = target.getMinutes().toString().padStart(2,'0');
+            document.getElementById('time-'+id).value = `${h}:${m}`;
+
+            timers[id].targetDate = target;
+            runCountdown(id);
+        }
+
+        function startTimer(id) {
+            const val = document.getElementById('time-'+id).value;
+            if (!val) return;
+            initAudio(id);
+            fullReset(id);
+            document.getElementById('time-'+id).value = val;
+
+            const now = new Date();
+            let target = new Date();
+            const [h, m] = val.split(':');
+            target.setHours(h, m, 0, 0);
+            if (target <= now) target.setDate(target.getDate() + 1);
+
+            timers[id].targetDate = target;
+            runCountdown(id);
+        }
+
+        function runCountdown(id) {
+            if (timers[id].interval) clearInterval(timers[id].interval);
+            const display = document.getElementById('display-'+id);
+
+            timers[id].interval = setInterval(() => {
+                if (timers[id].mainPaused) return;
+
+                const diff = timers[id].targetDate - new Date();
+
+                if (diff <= 1800000 && diff > 1799000 && !timers[id].warningSent) {
+                    timers[id].warningSent = true;
+                    if (Notification.permission === "granted") new Notification(`⏳ 30 MIN: ${id.toUpperCase()}`);
+                    playBeep(id);
+                }
+
+                if (diff <= 0) {
+                    clearInterval(timers[id].interval);
+                    display.innerText = "00:00:00";
+                    triggerAlarm(id, id.toUpperCase());
+                } else {
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    display.innerText = `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                }
+            }, 1000);
+        }
+
+        function adjustTime(id, minutes) {
+            if (!timers[id].targetDate) return;
+            timers[id].targetDate = new Date(timers[id].targetDate.getTime() + minutes * 60000);
+
+            // Update input visually
+            const h = timers[id].targetDate.getHours().toString().padStart(2,'0');
+            const m = timers[id].targetDate.getMinutes().toString().padStart(2,'0');
+            document.getElementById('time-'+id).value = `${h}:${m}`;
+
+            // Update display immediately
+            const diff = timers[id].targetDate - new Date();
+            if(diff > 0) {
+                const h_disp = Math.floor(diff / 3600000);
+                const m_disp = Math.floor((diff % 3600000) / 60000);
+                const s_disp = Math.floor((diff % 60000) / 1000);
+                document.getElementById('display-'+id).innerText = `${h_disp}:${m_disp.toString().padStart(2,'0')}:${s_disp.toString().padStart(2,'0')}`;
+            }
+        }
+
+        function toggleMainPause(id) {
+            if (!timers[id].targetDate) return;
+            const btn = document.getElementById('btn-main-pause-'+id);
+
+            if (!timers[id].mainPaused) {
+                timers[id].mainPaused = true;
+                timers[id].mainRemaining = timers[id].targetDate - new Date();
+                btn.innerText = "▶";
+                btn.classList.remove('bg-yellow-600/50');
+                btn.classList.add('bg-green-600/50');
+            } else {
+                timers[id].mainPaused = false;
+                timers[id].targetDate = new Date(new Date().getTime() + timers[id].mainRemaining);
+
+                const h = timers[id].targetDate.getHours().toString().padStart(2,'0');
+                const m = timers[id].targetDate.getMinutes().toString().padStart(2,'0');
+                document.getElementById('time-'+id).value = `${h}:${m}`;
+
+                btn.innerText = "⏸";
+                btn.classList.remove('bg-green-600/50');
+                btn.classList.add('bg-yellow-600/50');
+            }
+        }
+
+        // --- SISTEMA DE COOLDOWN ---
+
+        function startCooldown(id) {
+            initAudio(id);
+            document.getElementById('card-'+id).classList.remove('success-active');
+
+            const h = parseInt(document.getElementById('cd-h-'+id).value) || 0;
+            const m = parseInt(document.getElementById('cd-m-'+id).value) || 0;
+            const duration = (h * 3600000) + (m * 60000);
+
+            timers[id].cooldownTotal = duration;
+            timers[id].cooldownTarget = new Date().getTime() + duration;
+            timers[id].cdPaused = false;
+
+            document.getElementById('cooldown-panel-'+id).classList.remove('hidden');
+            const btn = document.getElementById('btn-pause-cd-'+id);
+            btn.innerText = "⏸";
+            btn.classList.remove('bg-green-600/50');
+            btn.classList.add('bg-yellow-600/50');
+
+            if(timers[id].cooldownInterval) clearInterval(timers[id].cooldownInterval);
+
+            timers[id].cooldownInterval = setInterval(() => {
+                if(timers[id].cdPaused) return;
+
+                const now = new Date().getTime();
+                const left = timers[id].cooldownTarget - now;
+
+                const display = document.getElementById('cooldown-display-'+id);
+                const bar = document.getElementById('cooldown-bar-'+id);
+                const percentage = (left / timers[id].cooldownTotal) * 100;
+                bar.style.width = `${Math.max(0, percentage)}%`;
+
+                if (left <= 0) {
+                    clearInterval(timers[id].cooldownInterval);
+                    display.innerText = "¡LISTO!";
+                    bar.style.width = "0%";
+                    if (Notification.permission === "granted") new Notification(`✅ COOLDOWN TERMINADO: ${id.toUpperCase()}`);
+                    playSuccessSound(id); // USAR EL SONIDO DE VICTORIA
+                } else {
+                    const ch = Math.floor(left / 3600000);
+                    const cm = Math.floor((left % 3600000) / 60000);
+                    const cs = Math.floor((left % 60000) / 1000);
+                    display.innerText = (ch > 0) ? `${ch}:${cm.toString().padStart(2,'0')}:${cs.toString().padStart(2,'0')}` : `${cm}:${cs.toString().padStart(2,'0')}`;
+                }
+            }, 1000);
+        }
+
+        function adjustCooldown(id, minutes) {
+            if (!timers[id].cooldownTarget) return;
+            // Adjust cooldown target
+            timers[id].cooldownTarget += minutes * 60000;
+            // Optionally adjust total for progress bar visual consistency or just let it jump
+            // timers[id].cooldownTotal += minutes * 60000;
+
+            // Force update display
+            const now = new Date().getTime();
+            const left = timers[id].cooldownTarget - now;
+
+            const display = document.getElementById('cooldown-display-'+id);
+            const ch = Math.floor(left / 3600000);
+            const cm = Math.floor((left % 3600000) / 60000);
+            const cs = Math.floor((left % 60000) / 1000);
+
+            if (left > 0) {
+                 display.innerText = (ch > 0) ? `${ch}:${cm.toString().padStart(2,'0')}:${cs.toString().padStart(2,'0')}` : `${cm}:${cs.toString().padStart(2,'0')}`;
+            }
+        }
+
+        function toggleCooldownPause(id) {
+            const btn = document.getElementById('btn-pause-cd-'+id);
+            if (!timers[id].cdPaused) {
+                timers[id].cdPaused = true;
+                timers[id].cdRemaining = timers[id].cooldownTarget - new Date().getTime();
+                btn.innerText = "▶";
+                btn.classList.remove('bg-yellow-600/50');
+                btn.classList.add('bg-green-600/50');
+            } else {
+                timers[id].cdPaused = false;
+                timers[id].cooldownTarget = new Date().getTime() + timers[id].cdRemaining;
+                btn.innerText = "⏸";
+                btn.classList.remove('bg-green-600/50');
+                btn.classList.add('bg-yellow-600/50');
+            }
+        }
+
+        function markSuccess(id) {
+            // Play victory sound on click
+            initAudio(id);
+            playSuccessSound(id);
+
+            if (timers[id].cooldownInterval) clearInterval(timers[id].cooldownInterval);
+            document.getElementById('cooldown-panel-'+id).classList.add('hidden');
+            document.getElementById('card-'+id).classList.add('success-active');
+        }
+
+        // --- AUDIO ---
+        function initAudio(id) {
+            if (!timers[id].audioContext) timers[id].audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (timers[id].audioContext.state === 'suspended') timers[id].audioContext.resume();
+        }
+
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) return alert("Navegador no compatible");
+            Notification.requestPermission().then(p => {
+                const btn = document.getElementById('btn-permiso-notif');
+                if (p === "granted") {
+                    btn.innerHTML = "✅ ACTIVADO";
+                    btn.className = "flex-1 bg-green-600 text-white text-[10px] font-bold py-2 rounded";
+                    new Notification("DBFS Tracker", { body: "Sistema listo." });
+                } else {
+                    btn.innerText = "❌ DENEGADO";
+                    btn.className = "flex-1 bg-red-600 text-white text-[10px] font-bold py-2 rounded";
+                }
+            });
+        }
+
+        function testSystem() {
+            initAudio('android');
+            playSuccessSound('android'); // Probar sonido de victoria
+            setTimeout(() => playBeep('android'), 1000); // Probar alarma
+            if (Notification.permission === "granted") new Notification("TEST", { body: "Notificaciones OK" });
+        }
+
+        function playBeep(id) {
+            // Sonido de Alarma (Sirena)
+            const ctx = timers[id].audioContext;
+            if(!ctx) return;
+            const o = ctx.createOscillator(); const g = ctx.createGain();
+            o.type = 'square';
+            o.frequency.setValueAtTime(440, ctx.currentTime);
+            o.frequency.linearRampToValueAtTime(880, ctx.currentTime + 0.5);
+            g.gain.value = 0.1;
+            o.connect(g); g.connect(ctx.destination);
+            o.start(); setTimeout(() => o.stop(), 500);
+        }
+
+        function playSuccessSound(id) {
+            // Sonido de Victoria (Arpegio Mayor)
+            const ctx = timers[id].audioContext;
+            if(!ctx) return;
+            const now = ctx.currentTime;
+
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => { // C Major
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'triangle';
+                o.frequency.setValueAtTime(freq, now + i * 0.1);
+                g.gain.setValueAtTime(0.1, now + i * 0.1);
+                g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.3);
+                o.connect(g);
+                g.connect(ctx.destination);
+                o.start(now + i * 0.1);
+                o.stop(now + i * 0.1 + 0.3);
+            });
+        }
+
+        function triggerAlarm(id, name) {
+            const card = document.getElementById('card-'+id);
+            const btn = document.getElementById('btn-stop-'+id);
+            card.classList.add('alarm-active');
+            btn.classList.remove('hidden');
+            if (Notification.permission === "granted") new Notification("🚨 ALERTA DBFS", { body: `Terminó: ${name}` });
+
+            const ctx = timers[id].audioContext;
+            const o = ctx.createOscillator(); const g = ctx.createGain();
+            o.type = 'square'; o.frequency.setValueAtTime(440, ctx.currentTime);
+            o.frequency.linearRampToValueAtTime(880, ctx.currentTime + 0.5);
+            g.gain.value = 0.1; o.connect(g); g.connect(ctx.destination);
+            o.start(); timers[id].oscillator = o;
+            setTimeout(() => silenceAlarm(id), 5000);
+        }
+
+        function silenceAlarm(id) {
+            document.getElementById('card-'+id).classList.remove('alarm-active');
+            document.getElementById('btn-stop-'+id).classList.add('hidden');
+            if (timers[id].oscillator) { try { timers[id].oscillator.stop(); } catch(e){} timers[id].oscillator = null; }
+        }
+    </script>
+</body>
+</html>
