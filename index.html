@@ -69,7 +69,7 @@
             DBFS TRACKER
         </h1>
 
-        <!-- CRÉDITOS (Movidso arriba) -->
+        <!-- CRÉDITOS -->
         <div class="text-slate-400 text-xs mb-6 space-y-1 bg-slate-900/50 p-2 rounded-lg inline-block border border-slate-700/50">
             <p>Creado por <span class="text-yellow-500 font-bold">McDaniel93</span> (Discord)</p>
             <p>Roblox: <span class="text-blue-400 font-bold">doky515</span></p>
@@ -147,7 +147,7 @@
                         <button onclick="fullReset('android')" class="px-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded shadow-lg border border-gray-600">↺</button>
                     </div>
 
-                    <!-- COOLDOWN PANEL (CON CONTROLES NUEVOS) -->
+                    <!-- COOLDOWN PANEL -->
                     <div id="cooldown-panel-android" class="hidden mt-2 bg-red-900/20 border border-red-500/30 rounded p-2 relative">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-[10px] text-red-300 uppercase font-bold">Reintentar:</span>
@@ -296,18 +296,39 @@
                     <button id="btn-stop-animaldojo" onclick="silenceAlarm('animaldojo')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
                 </div>
 
+                <!-- CIENTIFICO LOCO (NUEVA DUNGEON) -->
+                <div id="card-cientifico" class="glass-panel rounded-lg p-4 border-t-2 border-cyan-500 relative group">
+                    <div class="flex justify-between items-start mb-2"><h3 class="text-lg text-white font-bold">Científico Loco</h3><span class="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">3H</span></div>
+                    <div class="bg-black/30 rounded p-2 mb-2">
+                        <button onclick="startAuto('cientifico', 3)" class="w-full mb-2 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 text-white font-bold text-xs py-2 rounded shadow-lg"><span>🕒</span> DETECTAR HORA AUTO (+3H)</button>
+                        <div id="display-cientifico" class="text-3xl text-center text-cyan-100 font-mono tracking-widest my-2 font-bold">00:00:00</div>
+                        <div class="flex justify-center items-center gap-2 mb-2"><button onclick="adjustTime('cientifico', -1)" class="btn-ctrl">-1m</button><button id="btn-main-pause-cientifico" onclick="toggleMainPause('cientifico')" class="btn-ctrl bg-yellow-600/50 w-8 text-white">⏸</button><button onclick="adjustTime('cientifico', 1)" class="btn-ctrl">+1m</button></div>
+                        <div class="flex justify-center items-center text-[10px] text-slate-500 gap-2 border-t border-slate-700/50 pt-2"><span>O manual:</span><input type="time" id="time-cientifico" class="bg-slate-800 text-center w-16 text-white rounded border border-slate-600 focus:outline-none focus:border-cyan-500" onchange="startTimer('cientifico')"></div>
+                    </div>
+                    <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded mb-2 border border-slate-700"><span class="text-[9px] text-slate-400">TIEMPO DERROTA:</span><div class="flex items-center gap-1"><input type="number" id="cd-h-cientifico" value="0" class="input-mini w-6"> h<input type="number" id="cd-m-cientifico" value="15" class="input-mini w-8"> m</div></div>
+                    <div class="flex gap-2"><button onclick="markSuccess('cientifico')" class="flex-1 bg-green-700 text-white text-xs font-bold py-3 rounded shadow-lg">🏆 VICTORIA</button><button onclick="startCooldown('cientifico')" class="flex-1 bg-slate-700 text-white text-xs font-bold py-3 rounded shadow-lg border-l-4 border-cyan-500">💀 DERROTA</button><button onclick="fullReset('cientifico')" class="px-3 bg-gray-700 text-white font-bold rounded shadow-lg border border-gray-600">↺</button></div>
+                    <div id="cooldown-panel-cientifico" class="hidden mt-2 bg-cyan-900/20 border border-cyan-500/30 rounded p-2"><div class="flex justify-between items-center mb-2"><span class="text-[10px] text-cyan-300 font-bold">Reintentar:</span><div class="flex gap-1"><button onclick="adjustCooldown('cientifico', -1)" class="btn-ctrl w-6 h-5 text-[9px]">-1m</button><button id="btn-pause-cd-cientifico" onclick="toggleCooldownPause('cientifico')" class="text-[10px] bg-yellow-600/50 text-white px-2 py-0.5 rounded h-5 flex items-center">⏸</button><button onclick="adjustCooldown('cientifico', 1)" class="btn-ctrl w-6 h-5 text-[9px]">+1m</button></div></div><div id="cooldown-display-cientifico" class="text-lg text-center text-cyan-400 font-mono font-bold">00:00</div><div class="w-full bg-slate-800 h-1 mt-1 rounded-full"><div id="cooldown-bar-cientifico" class="bg-cyan-500 h-full w-full cooldown-bar"></div></div></div>
+                    <button id="btn-stop-cientifico" onclick="silenceAlarm('cientifico')" class="hidden w-full mt-2 bg-yellow-500 text-black font-bold py-1 rounded text-xs animate-pulse">APAGAR ALARMA</button>
+                </div>
+
             </div>
         </div>
     </main>
 
     <!-- FOOTER AÑADIDO AQUI -->
     <footer class="mt-12 mb-6 text-center text-slate-500 text-xs">
-        <!-- Reemplaza esto con el contenido correcto si es necesario -->
+        <p class="mb-2">Creado por <span class="text-yellow-500 font-bold">McDaniel93</span> | Roblox: <span class="text-blue-400 font-bold">doky515</span></p>
+        <p>
+            ¿Quieres donar Robux?
+            <a href="https://www.roblox.com/es/catalog/15408656405/StoryShift-Chara" target="_blank" class="text-red-400 hover:text-red-300 transition-colors underline font-bold">
+                Compra la camisa: ( ✦ ) StoryShift Chara
+            </a>
+        </p>
     </footer>
 
     <script>
         const timers = {};
-        const ids = ['android', 'snowfield', 'majinbuu', 'gotenks', 'saiba', 'thedrink', 'redribbon', 'babidi', 'animaldojo'];
+        const ids = ['android', 'snowfield', 'majinbuu', 'gotenks', 'saiba', 'thedrink', 'redribbon', 'babidi', 'animaldojo', 'cientifico'];
 
         ids.forEach(id => {
             timers[id] = {
